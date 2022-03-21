@@ -59,7 +59,7 @@ spec:
             - name: FDB-GROUP-PRIVATE-KEY-FILE
               value: "nil"
             - name: FDB-GROUP-TIMEOUT
-              value: "5s"
+              value: "10000"
             {{- if .Values.config.fdbEncryptionSecret }}
             - name: FDB-ENCRYPTION-SECRET
               valueFrom:
