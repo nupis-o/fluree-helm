@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: fluree-ledger
+  labels:
+    app: fluree-ledger
+spec:
+  selector:
+    matchLabels:
+      app: fluree-ledger
+      tier: backend
+  serviceName: fluree-ledger-http-api
+  replicas: {{ .Values.config.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: fluree-ledger
+        tier: backend
+    spec:
+      serviceAccountName: fluree
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: master
+          image: "{{ .Values.config.image }}:{{ .Values.config.imageTag }}"
+          ports:
+            - containerPort: 8090
+          volumeMounts:
+            - mountPath: /var/lib/fluree
+              name: fluree-data
+          env:
+            - name: FDB-MODE
+              value: {{ .Values.config.environment.fdbMode }}
+            - name: FDB-CONSENSUS-TYPE
+              value: {{ .Values.config.environment.fdbConsensusType }}
+            - name: FDB-JOIN
+              value: "{{ .Values.config.environment.fdbJoin }}"
+            - name: FDB-GROUP-SERVERS
+              value: {{ template "buildLedgerGroups" . }}
+            - name: FDB-GROUP-THIS-SERVER
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: FDB-STORAGE-TYPE
+              value: {{ .Values.config.environment.fdbStorageType }}
+            - name: FDB-API-OPEN
+              value: "{{ .Values.config.environment.fdbApiOpen }}"
+            - name: FDB-PW-AUTH-ENABLE
+              value: "{{ .Values.config.environment.fdbPwAuthEnable }}"
+            {{- if .Values.config.fdbGroupPrivateKey }}
+            - name: FDB-GROUP-PRIVATE-KEY
+              valueFrom:
+                secretKeyRef:
+                  name: fluree-secrets
+                  key: fdbGroupPrivateKey
+            {{- end }}
+            - name: FDB-GROUP-PRIVATE-KEY-FILE
+              value: "nil"
+            - name: FDB-GROUP-TIMEOUT
+              value: "5s"
+            {{- if .Values.config.fdbEncryptionSecret }}
+            - name: FDB-ENCRYPTION-SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: fluree-secrets
+                  key: fdbEncryptionSecret
+            {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: fluree-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- if .Values.config.persistence.storageClass }}
+        storageClassName: "{{ .Values.config.persistence.storageClass }}"
+        {{- end }}
+        resources:
+          requests:
+            storage: "{{ .Values.config.persistence.size }}"

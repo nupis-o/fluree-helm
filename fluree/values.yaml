@@ -1,0 +1,22 @@
+config:
+  image: "fluree/ledger"
+  imageTag: "latest"
+  replicaCount: 5
+
+  environment:
+    fdbMode: dev
+    fdbConsensusType: raft
+    fdbJoin: false
+    fdbStorageType: file
+    fdbApiOpen: false
+    fdbPwAuthEnable: false
+
+  # optional private key
+  fdbGroupPrivateKey: 
+  # optional encryption secret (leads to errors in the ledger see https://github.com/fluree/ledger/issues/141)
+  fdbEncryptionSecret: 
+
+  persistence:
+    # optional storageClass
+    storageClass: 
+    size: 10Gi
