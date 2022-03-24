@@ -7,6 +7,7 @@ metadata:
     tier: backend
 spec:
   type: ClusterIP
+  clusterIP: None
   ports:
   - port: 8090
     targetPort: 8090
